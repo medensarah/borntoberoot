@@ -71,15 +71,15 @@ Users = users | wc -w
 ( users = displays users;   wc -w = count words )
 
 IP and MAC address :
-Adress IP = hostname -I
+Adress_IP = hostname -I
 ( hostname -I = shows all IP addresses of the machine's active network interfaces )
-Adress Mac = ip link | grep "link/ether" | awk '{print $2}'
+Adress_Mac = ip link | grep "link/ether" | awk '{print $2}'
 ( Adress mac = unique identifier, for device, on a local network;   ip link = view all network interfaces and their status )
 OR
-Adress IP = ip route get 1.1.1.1 | awk '{print  $7}'
+Adress_IP = ip route get 1.1.1.1 | awk '{print  $7}'
 (ip route get 1.1.1.1 = simulate a query to find which interface is used for internet access, local IP address )
 Interface = ip route get 1.1.1.1 | awk '{print $5}'
-Adress Mac =  ip link | awk '/$Interface/ {getline; print \$2}'
+Adress_MAC =  ip link | awk '/$Interface/ {getline; print \$2}'
 ( {getline; print \$2} = read the next line and then print;   \$2 = to escape the $ symbol so that bash doesn’t expand it before passing it to awk )
 
 Sudo commands :
@@ -125,9 +125,22 @@ TCP = $(ss -s | awk '/estab/ {print $4 " ESTABLISHED"}')
 Users = $(users | wc -w)
 
 #IP and MAC address
-Adress IP = $(ip route get 1.1.1.1 | awk '{print  $7}')
+Adress_IP = $(ip route get 1.1.1.1 | awk '{print  $7}')
 Interface = $(ip route get 1.1.1.1 | awk '{print $5}')
-Adress Mac =  $(ip link | awk '/$Interface/ {getline; print \$2}')
+Adress_MAC =  $(ip link | awk '/$Interface/ {getline; print \$2}')
 
 #Sudo commands
 Sudo = $(journalctl _COMM=sudo | grep COMMAND | wc -l)
+
+wall"	\# System's architecture : $Sys
+		\# CPU Physical : $CPU_Physical
+		\# CPU Logical : $CPU_Logical
+		\# Ram Usage : $Ram_Used/$Ram_Total MiB ($Ram_Used_in_percentage)
+		\# Disk Usage : $Disk_Used/$Disk_Total MiB ($Disk_Used_in_percentage)
+		\# CPU Usage : $CPU_Usage
+		\# Last reboot : $Reboot
+		\# LVM use : $LVM_Use
+		\# TCP Connections : $TCP
+		\# User log : $Users
+		\# Network adress : IP $($Adress_IP) ($Adress_MAC)
+		\# Sudo command : $Sudo"
