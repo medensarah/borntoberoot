@@ -1,0 +1,133 @@
+Born2beroot notes
+
+INFO system
+/proc/cpuinfo
+lscpu
+
+Crontab :
+sudo crontab -u root -e
+
+Command SSH :
+sudo service ssh status
+sudo service ssh restart
+ssh smedenec@localhost -p 4241
+
+Password :
+Chage <user> (for all users --> 2 30 _ _ _ _)
+cat /etc/pam.d/common-password
+cat /etc/cron.d/monitoring.sh
+
+SCRIPT
+
+System's architecture :
+Sys = uname -a
+
+Number of logical cores (CPU):
+CPU_Logical = grep -c "^processor" /proc/cpuinfo
+( grep = find a ligne;  -c = count;  ^ = all lines that start by )
+OR
+CPU_Logical = lscpu | grep "^CPU(s):" | awk '{print $2}'
+( | = separate threads of multiples commands;   awk = cam manipulate text ( extract words or lignes and also do calcul ) )
+
+Number of physical cores (CPU):
+CPU_Physical = grep "core id" /proc/cpuinfo | sort -u | wc -l
+( sort -u =  filters out duplicates lines;   wc -l = count lines )
+OR
+CPU_Physical = lscpu | awk '/Core\(s\) per socket:/ {cores=$4} /Socket\(s\):/ {sockets=$2} END {print cores * sockets}'
+( / = all lines that are in between;  \(s\) = escape the parentheses;  {cores=$4}  = take the fourth argument in this line;   END = like the pipe;   {print cores * sockets} = multiply 2 values )
+
+RAM memory details :
+Ram_Used = free -m | awk '/Mem:/ {print $3}'
+( free -m = print ram memory in MiB (base 1024) )
+Ram_Total = free -m | awk '/Mem:/ {print $2}'
+Ram_Used_in_percentage = free -m | awk '/Mem:/ {print $3/$2*100 " %"}'
+( $3/$2*100 = percentage calcul  ( ( usage / total ) * 100 ) )
+
+Disk memory details :
+Disk_Used = df -m | awk 'NR > 1 {used += $3} END {print used}'
+( df -m = print disk memory in MiB;   {used += $3} = sum all the entries listed under 'used' )
+Disk_Total = df -m | awk 'NR > 1 {total += $2} END {print total}'
+Disk_Used in percentage = df -m | awk 'NR > 1 {used += $3} {total += $2} END {print used/total*100 " %"}'
+( NR > 1 = ignores the first line )
+
+CPU Usage percentage :
+CPU_Usage = vmstat 2 3 | tail -1 | awk '{print 100 - $15 " %"}'
+( vmstat 2 3 =  print real-time system performance monitor every 2 seconds and 3 times;   tail -1 = processes just the last line )
+
+Last reboot :
+Reboot = uptime -s
+( uptime -s =  print date and time of the last reboot )
+
+LVM is active :
+LVM_Use = if [ $(grep -c "mapper" /etc/fstab) -ge 1 ]; then echo yes; else echo no; fi
+( if [ ] =  conditional test block;   fi = to end the block;   LVM = logical volume manager ( to manage disk storage more flexibly );   -ge 1 = superior or equal to 1 )
+
+TCP Connections :
+TCP = ss -s | awk '/estab/ {print $4 " ESTABLISHED"}'
+( ss = displays network sockets (connections);   -s = print the summary for all connections;   grep ESTAB = selects connections in ESTABLISHED state )
+
+Users :
+Users = users | wc -w
+( users = displays users;   wc -w = count words )
+
+IP and MAC address :
+Adress IP = hostname -I
+( hostname -I = shows all IP addresses of the machine's active network interfaces )
+Adress Mac = ip link | grep "link/ether" | awk '{print $2}'
+( Adress mac = unique identifier, for device, on a local network;   ip link = view all network interfaces and their status )
+OR
+Adress IP = ip route get 1.1.1.1 | awk '{print  $7}'
+(ip route get 1.1.1.1 = simulate a query to find which interface is used for internet access, local IP address )
+Interface = ip route get 1.1.1.1 | awk '{print $5}'
+Adress Mac =  ip link | awk '/$Interface/ {getline; print \$2}'
+( {getline; print \$2} = read the next line and then print;   \$2 = to escape the $ symbol so that bash doesn’t expand it before passing it to awk )
+
+Sudo commands :
+Sudo = journalctl _COMM=sudo | grep COMMAND | wc -l
+( jornalctl = view and query system logs;   _COMM=sudo = to only show admin commands )
+
+Script finish
+
+#!/bin/bash
+
+#System's architecture
+Sys = $(uname -a)
+
+#Number of logical cores (CPU)
+CPU_Logical = $(grep -c "^processor" /proc/cpuinfo)
+
+#Number of physical cores (CPU)
+CPU_Physical = $(grep "core id" /proc/cpuinfo | sort -u | wc -l)
+
+#RAM memory details
+Ram_Used = $(free -m | awk '/Mem:/ {print $3}')
+Ram_Total = $(free -m | awk '/Mem:/ {print $2}')
+Ram_Used_in_percentage = $(free -m | awk '/Mem:/ {print $3/$2*100 " %"}')
+
+#Disk memory details
+Disk_Used = $(df -m | awk 'NR > 1 {used += $3} END {print used}')
+Disk_Total = $(df -m | awk 'NR > 1 {total += $2} END {print total}')
+Disk_Used_in_percentage = $(df -m | awk 'NR > 1 {used += $3} {total += $2} END {print used/total*100 " %"}')
+
+#CPU Usage percentage
+CPU_Usage = $(vmstat 2 3 | tail -1 | awk '{print 100 - $15 " %"}')
+
+#Last reboot
+Reboot = $(uptime -s)
+
+#LVM is active
+LVM_Use = $(if [ $(grep -c "mapper" /etc/fstab) -ge 1 ]; then echo yes; else echo no; fi)
+
+#TCP Connections
+TCP = $(ss -s | awk '/estab/ {print $4 " ESTABLISHED"}')
+
+#Users
+Users = $(users | wc -w)
+
+#IP and MAC address
+Adress IP = $(ip route get 1.1.1.1 | awk '{print  $7}')
+Interface = $(ip route get 1.1.1.1 | awk '{print $5}')
+Adress Mac =  $(ip link | awk '/$Interface/ {getline; print \$2}')
+
+#Sudo commands
+Sudo = $(journalctl _COMM=sudo | grep COMMAND | wc -l)
