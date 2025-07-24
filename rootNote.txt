@@ -33,6 +33,28 @@ cat /etc/pam.d/common-password
 nano /etc/sudoers.d/sudo_config
 (password default)
 
+Users :
+sudo adduser <user>
+(create a user)
+sudo userdel -r <user>
+(delete a user;   -r = delete /home)
+sudo groupadd <group>
+(create a group)
+sudo groupdel <group>
+(delete a group)
+getent passwd
+(get all users)
+getent group
+(get all groups)
+groups <user>
+(get all groups of a user)
+getent group <group>
+(get all users in a group)
+sudo usermod -aG <group> <user>
+(add user in a group;   -aG = append in a group)
+sudo deluser <user> <group>
+(remove user from a group)
+
 SCRIPT
 
 System's architecture :
