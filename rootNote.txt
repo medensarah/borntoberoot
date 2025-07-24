@@ -1,11 +1,25 @@
 Born2beroot notes
 
+!! La règle suivante ne s’applique pas à l’utilisateur root : le mot de passe devra
+comporter au moins 7 caractères qui ne sont pas présents dans l’ancien mot de passe !!
+
 INFO system
 /proc/cpuinfo
 lscpu
 
-Crontab :
+Script Crontab :
+*/10 * * * * /bin/bash /opt/scripts/monitoring.sh | wall
+( Set time )
+contrl + k
+( in nano, delete line )
 sudo crontab -u root -e
+cat /opt/scripts/monitoring.sh
+sudo journalctl -u cron
+( View logs )
+sudo chmod +x monitoring.sh
+( Giving script the rights )
+sudo bash /opt/scripts/monitoring.sh
+( force the script to display )
 
 Command SSH :
 sudo service ssh status
@@ -15,7 +29,9 @@ ssh smedenec@localhost -p 4241
 Password :
 Chage <user> (for all users --> 2 30 _ _ _ _)
 cat /etc/pam.d/common-password
-cat /etc/cron.d/monitoring.sh
+(list rules)
+nano /etc/sudoers.d/sudo_config
+(password default)
 
 SCRIPT
 
@@ -79,9 +95,9 @@ OR
 Adress_IP = ip route get 1.1.1.1 | awk '{print  $7}'
 (ip route get 1.1.1.1 = simulate a query to find which interface is used for internet access, local IP address )
 Interface = ip route get 1.1.1.1 | awk '{print $5}'
-Adress_MAC =  ip link | awk '/$Interface/ {getline; print \$2}'
-( {getline; print \$2} = read the next line and then print;   \$2 = to escape the $ symbol so that bash doesn’t expand it before passing it to awk )
-
+Adress_MAC = ip link | awk -v Int="$Interface" '$0 ~ Int {getline; print $2}'
+( awk -v Int="$Interface" = passes the shell variable $Interface into awk as an internal variable named 'Int';   $0 ~ Int  = tells awk to check if the current line ($0) contains the value stored in 'Int' )
+( {getline; print $2} = read the next line and then print )
 Sudo commands :
 Sudo = journalctl _COMM=sudo | grep COMMAND | wc -l
 ( jornalctl = view and query system logs;   _COMM=sudo = to only show admin commands )
@@ -91,56 +107,56 @@ Script finish
 #!/bin/bash
 
 #System's architecture
-Sys = $(uname -a)
+Sys=$(uname -a)
 
 #Number of logical cores (CPU)
-CPU_Logical = $(grep -c "^processor" /proc/cpuinfo)
+CPU_Logical=$(grep -c "^processor" /proc/cpuinfo)
 
 #Number of physical cores (CPU)
-CPU_Physical = $(grep "core id" /proc/cpuinfo | sort -u | wc -l)
+CPU_Physical=$(grep "core id" /proc/cpuinfo | sort -u | wc -l)
 
 #RAM memory details
-Ram_Used = $(free -m | awk '/Mem:/ {print $3}')
-Ram_Total = $(free -m | awk '/Mem:/ {print $2}')
-Ram_Used_in_percentage = $(free -m | awk '/Mem:/ {print $3/$2*100 " %"}')
+Ram_Used=$(free -m | awk '/Mem:/ {print $3}')
+Ram_Total=$(free -m | awk '/Mem:/ {print $2}')
+Ram_Used_in_percentage=$(free -m | awk '/Mem:/ {print $3/$2*100 " %"}')
 
 #Disk memory details
-Disk_Used = $(df -m | awk 'NR > 1 {used += $3} END {print used}')
-Disk_Total = $(df -m | awk 'NR > 1 {total += $2} END {print total}')
-Disk_Used_in_percentage = $(df -m | awk 'NR > 1 {used += $3} {total += $2} END {print used/total*100 " %"}')
+Disk_Used=$(df -m | awk 'NR > 1 {used += $3} END {print used}')
+Disk_Total=$(df -m | awk 'NR > 1 {total += $2} END {print total}')
+Disk_Used_in_percentage=$(df -m | awk 'NR > 1 {used += $3} {total += $2} END {print used/total*100 " %"}')
 
 #CPU Usage percentage
-CPU_Usage = $(vmstat 2 3 | tail -1 | awk '{print 100 - $15 " %"}')
+CPU_Usage=$(vmstat 2 3 | tail -1 | awk '{print 100 - $15 " %"}')
 
 #Last reboot
-Reboot = $(uptime -s)
+Reboot=$(uptime -s)
 
 #LVM is active
-LVM_Use = $(if [ $(grep -c "mapper" /etc/fstab) -ge 1 ]; then echo yes; else echo no; fi)
+LVM_Use=$(if [ $(grep -c "mapper" /etc/fstab) -ge 1 ]; then echo yes; else echo no; fi)
 
 #TCP Connections
-TCP = $(ss -s | awk '/estab/ {print $4 " ESTABLISHED"}')
+TCP=$(ss -s | awk '/estab/ {print $4 " ESTABLISHED"}')
 
 #Users
-Users = $(users | wc -w)
+Users=$(users | wc -w)
 
 #IP and MAC address
-Adress_IP = $(ip route get 1.1.1.1 | awk '{print  $7}')
-Interface = $(ip route get 1.1.1.1 | awk '{print $5}')
-Adress_MAC =  $(ip link | awk '/$Interface/ {getline; print \$2}')
+Adress_IP=$(ip route get 1.1.1.1 | awk '{print  $7}')
+Interface=$(ip route get 1.1.1.1 | awk '{print $5}')
+Adress_MAC=$(ip link | awk -v Int="$Interface" '$0 ~ Int {getline; print $2}')
 
 #Sudo commands
-Sudo = $(journalctl _COMM=sudo | grep COMMAND | wc -l)
+Sudo=$(journalctl _COMM=sudo | grep COMMAND | wc -l)
 
-wall"	\# System's architecture : $Sys
-		\# CPU Physical : $CPU_Physical
-		\# CPU Logical : $CPU_Logical
-		\# Ram Usage : $Ram_Used/$Ram_Total MiB ($Ram_Used_in_percentage)
-		\# Disk Usage : $Disk_Used/$Disk_Total MiB ($Disk_Used_in_percentage)
-		\# CPU Usage : $CPU_Usage
-		\# Last reboot : $Reboot
-		\# LVM use : $LVM_Use
-		\# TCP Connections : $TCP
-		\# User log : $Users
-		\# Network adress : IP $($Adress_IP) ($Adress_MAC)
-		\# Sudo command : $Sudo"
+echo    "System's architecture : $Sys
+		CPU Physical : $CPU_Physical
+		CPU Logical : $CPU_Logical
+		Ram Usage : $Ram_Used/$Ram_Total MiB ($Ram_Used_in_percentage)
+		Disk Usage : $Disk_Used/$Disk_Total MiB ($Disk_Used_in_percentage)
+		CPU Usage : $CPU_Usage
+		Last reboot : $Reboot
+		LVM use : $LVM_Use
+		TCP Connections : $TCP
+		User log : $Users
+		Network adress : IP ($Adress_IP) ($Adress_MAC)
+		Sudo command : $Sudo"
