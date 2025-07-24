@@ -26,6 +26,13 @@ sudo service ssh status
 sudo service ssh restart
 ssh smedenec@localhost -p 4241
 
+Command UFW :
+sudo ufw status
+sudo ufw allow 8080
+(allow port)
+sudo ufw delete allow 8080
+(delete port)
+
 Password :
 Chage <user> (for all users --> 2 30 _ _ _ _)
 cat /etc/pam.d/common-password
@@ -34,6 +41,10 @@ nano /etc/sudoers.d/sudo_config
 (password default)
 
 Users :
+sudo nano /etc/hostname
+(to change hostname)
+sudo nano /etc/hosts
+(to change hostname also for ssh)
 sudo adduser <user>
 (create a user)
 sudo userdel -r <user>
