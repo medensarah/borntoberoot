@@ -1,11 +1,14 @@
 Born2beroot notes
 
-!! La règle suivante ne s’applique pas à l’utilisateur root : le mot de passe devra
-comporter au moins 7 caractères qui ne sont pas présents dans l’ancien mot de passe !!
-
 INFO system
 /proc/cpuinfo
 lscpu
+lsblk
+( partition )
+uname -a
+which sudo
+(check sudo installation)
+sudo reboot
 
 Script Crontab :
 */10 * * * * /bin/bash /opt/scripts/monitoring.sh | wall
@@ -13,9 +16,10 @@ Script Crontab :
 contrl + k
 ( in nano, delete line )
 sudo crontab -u root -e
+(-u root = precise for user root;   -e = editing)
 cat /opt/scripts/monitoring.sh
-sudo journalctl -u cron
-( View logs )
+sudo journalctl | grep "sudo"
+( View sudo logs )
 sudo chmod +x monitoring.sh
 ( Giving script the rights )
 sudo bash /opt/scripts/monitoring.sh
@@ -27,24 +31,33 @@ sudo service ssh restart
 ssh smedenec@localhost -p 4241
 
 Command UFW :
-sudo ufw status
+sudo service ufw status
+sudo ufw status verbose
 sudo ufw allow 8080
 (allow port)
 sudo ufw delete allow 8080
 (delete port)
 
 Password :
+passphrase = passphrase
+smedenec = Passphrase000
+root = Commandes000
 Chage <user> (for all users --> 2 30 _ _ _ _)
+Chage -l <user>
+(to verif if rules are set)
 cat /etc/pam.d/common-password
 (list rules)
 nano /etc/sudoers.d/sudo_config
 (password default)
+sudo passwd <user>
+(change password of a user)
 
 Users :
 sudo nano /etc/hostname
 (to change hostname)
 sudo nano /etc/hosts
 (to change hostname also for ssh)
+
 sudo adduser <user>
 (create a user)
 sudo userdel -r <user>
