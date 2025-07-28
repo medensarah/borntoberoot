@@ -48,7 +48,7 @@ Chage -l <user>
 cat /etc/pam.d/common-password
 (list rules)
 nano /etc/sudoers.d/sudo_config
-(password default)
+(sudo config)
 sudo passwd <user>
 (change password of a user)
 
